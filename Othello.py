@@ -53,6 +53,8 @@ class Game:
             self.players=[Human(),AI()]
             import random
             random.shuffle(self.players)
+        elif self.mode==3:
+            self.players=[AI(),AI()]
         self.game_loop=self._game_flow()
         winner,reward,self.poss_next_steps=self._cal_state()
         return self.board,reward,self.poss_next_steps
@@ -89,7 +91,10 @@ class Game:
         while True:
             winner,reward,self.poss_next_steps= self._cal_state()
             if winner>-1:
-                self.gui.frames['Game_interface']._game_over(winner,reward)
+                if self.mode==3:
+                    yield  winner,reward,self.poss_next_steps
+                else:
+                    self.gui.frames['Game_interface'].game_over(winner,reward)
             if self.players[self.turn].is_human:
                 yield  winner,reward,self.poss_next_steps
             else:

@@ -21,7 +21,7 @@ class GUI(tk.Tk):
         
         #獲得每一個場景的實例並存到self.frames
         self.frames = {}
-        for F in (Main_interface, Game_interface,Game_over_interface,Game_interface_CvC):
+        for F in (Main_interface, Game_interface,Game_over_interface,CvC_Game_interface,CvC_Game_over_interface):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self,gd_parent=self.parent)
             self.frames[page_name] = frame
@@ -45,7 +45,8 @@ class GUI(tk.Tk):
             frame.init_GUI(mode)
         elif mode==4:               #Game_over_interface
             frame.display_result(other)
-            pass
+        elif mode==5:               #CvC_Game_over_interface
+            frame.display_result(other)
         frame.tkraise()
         
     def exit(self):
@@ -89,7 +90,7 @@ class Main_interface(Interface):
         
     def _CvC(self):
         self.grid_forget()
-        self.controller.show_frame("Game_interface_CvC",3)
+        self.controller.show_frame("CvC_Game_interface",3)
         
     def _exit(self):
         self.controller.exit()
@@ -126,7 +127,39 @@ class Game_over_interface(Interface):
         for ele in self.rewards:
             ele[0].grid(column=ele[2],row=ele[1],sticky="nesw")
 
-class Game_interface_CvC(Interface):
+class CvC_Game_over_interface(Interface):
+    def __init__(self, parent, controller,gd_parent):
+        super().__init__(parent, controller,gd_parent)
+        self.gd_parent=gd_parent
+        self.rewards=[]
+        self.return_to_main=tk.Button(self, text="Return to menu",
+                                      font=controller.title_font,
+                                      width = 15 ,command=self._return_to_main)
+        self.rewards.append([tk.Label(self, text="2",font=self.controller.title_font,width=4,height=1),1,1])
+        self.rewards.append([tk.Label(self, text='2',font=self.controller.title_font,width=4,height=1),1,0])
+        self.rewards.append([tk.Label(self, text="AI 2",font=self.controller.title_font,width=4,height=1),0,1])
+        self.rewards.append([tk.Label(self, text='AI 1',font=self.controller.title_font,width=4,height=1),0,0])
+        self.winner=tk.Label(self, text="?? win",font=self.controller.title_font,width=2,height=1)
+        self._widgets_grid()
+    def display_result(self,result):
+        self.rewards[0][0].configure(text=str(result["win"][0]))
+        self.rewards[1][0].configure(text=str(result["win"][1]))
+        if result["win"][0]>result["win"][1]:
+            self.winner.configure(text="AI 2 win")
+        elif result["win"][0]<result["win"][1]:
+            self.winner.configure(text="AI 1 win")
+        else:#flat:
+            self.winner.configure(text="Flat")
+    def _return_to_main(self):
+        self.grid_forget()
+        self.controller.show_frame("Main_interface",0)
+    def _widgets_grid(self):
+        self.return_to_main.grid(column=4,row=3,sticky="nesw")
+        self.winner.grid(column=4,row=1,sticky="nesw")
+        for ele in self.rewards:
+            ele[0].grid(column=ele[2],row=ele[1],sticky="nesw")
+
+class CvC_Game_interface(Interface):
     def __init__(self, parent, controller,gd_parent):
         super().__init__(parent, controller,gd_parent)
         self.first_play=True
@@ -160,8 +193,17 @@ class Game_interface_CvC(Interface):
         else:
             return False
     def _start_game(self):
-        times=self.text.get()
-        print(times)
+        win=[0,0]
+        times=(int)(self.text.get())
+        for i in range(times):
+            board,reward,poss_next_steps=self.gd_parent.game_start(3)
+            winner,reward,poss_next_steps=next(self.gd_parent.game_loop)
+            if winner!=2:
+                win[winner]+=1
+        self.grid_forget()
+        self.controller.show_frame("CvC_Game_over_interface",5,{"win":win})
+        self.first_play=False
+        
         
 
         
@@ -277,7 +319,7 @@ class Game_interface(Interface):
                 self._game_over()'''
             self._update_desks(poss_next_steps,'．')
             
-    def _game_over(self,winner,reward):
+    def game_over(self,winner,reward):
         self.grid_forget()
         self.controller.show_frame("Game_over_interface",4,{"winner":winner,"rewards":reward})
         self.first_play=False
