@@ -1,9 +1,9 @@
 # python3-Othello
 >This is just a project to practice Python and RL.
 
-![](img\main_menu.png)
+![](img/main_menu.png)
 
-![](img\game.png)
+![](img/game.png)
 
 ## Usage
 
