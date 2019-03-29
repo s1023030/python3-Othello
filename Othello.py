@@ -11,12 +11,16 @@
 
 '''
 import math
+import configparser 
 from GUI import GUI
-from Agent import Human,AI
+from Agent import *
 class Game:
     def __init__(self):
+        self.config=configparser.ConfigParser()
+        self.config.read("Othello.cfg")
         self.gui= GUI(parent=self)
         self.gui.mainloop()
+
     def game_start(self,mode,turn=1):
         #self.turn判斷是誰的回合
         #●:   1
@@ -36,7 +40,7 @@ class Game:
         #self._desks紀錄現在盤面所有desk的位置，
         #self._desks[0]為 0 desks
         #self._desks[1]為 1 desks
-        #以方便possible_next_step()計算。
+        #以方便_possible_next_step()計算。
         #位置紀錄格式:(row數,col數)
         self._desks=[
             set([(3,3),(4,4)]),set([(3,4),(4,3)])
@@ -50,17 +54,21 @@ class Game:
         if self.mode==1:
             self.players=[Human(),Human()]
         elif self.mode==2:
-            self.players=[Human(),AI()]
+            ai=self.config._sections["AI"]["0"]                          ## hard code
+            self.players=[Human(),AI_factory.generate_AI(ai)]
             import random
             random.shuffle(self.players)
         elif self.mode==3:
-            self.players=[AI(),AI()]
+            ai1=self.config._sections["AI"]["0"]                           ## hard code
+            ai2=self.config._sections["AI"]["0"]                           ## hard code
+            self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
         self.game_loop=self._game_flow()
         winner,reward,self.poss_next_steps=self._cal_state()
         return self.board,reward,self.poss_next_steps
+    
     def _cal_state(self):
         #檢查是否有贏家，同時計算彼此棋子數目，還有列出下一次可下的位置
-        self.poss_next_steps=self.possible_next_step()
+        self.poss_next_steps=self._possible_next_step()
         #處理沒有可能的下一步的情況
         winner=-1
         reward=[len(self._desks[0]),len(self._desks[1])] #calculate reward
@@ -124,7 +132,7 @@ class Game:
         print("=========================")
         return self.board
     
-    def possible_next_step(self):
+    def _possible_next_step(self):
         next_step=set()
         if self.turn==1:
             disk_of_turn=1

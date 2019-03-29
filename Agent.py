@@ -2,10 +2,24 @@
 class Agent:
     def __init__(self,is_human=True):
         self.is_human=is_human
-        pass
-    def next_step(self,reward,enviroment,poss_next_step):
-        pass
+        
+class Human(Agent):
+    def __init__(self,is_human=True):
+        super().__init__(is_human)
+
+class AI_factory:
+    def generate_AI(AI_type=""):
+        return {
+            "Random":AI_Random()
+        }[AI_type]
+
 class AI(Agent):
+    def __init__(self,is_human=False):
+        super().__init__(is_human)
+    def placing_desk(self,winner,board,reward,poss_next_steps):
+        pass
+    
+class AI_Random(AI):
     def __init__(self,is_human=False):
         super().__init__(is_human)
     def placing_desk(self,winner,board,reward,poss_next_steps):
@@ -17,6 +31,4 @@ class AI(Agent):
             return secure_random.sample(poss_next_steps,1)
         else:
             return [(-1,-1)]
-class Human(Agent):
-    def __init__(self,is_human=True):
-        super().__init__(is_human)
+

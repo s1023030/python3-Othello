@@ -122,8 +122,8 @@ class Game_over_interface(Interface):
         self.grid_forget()
         self.controller.show_frame("Main_interface",0)
     def _widgets_grid(self):
-        self.return_to_main.grid(column=4,row=3,sticky="nesw")
-        self.winner.grid(column=4,row=1,sticky="nesw")
+        self.return_to_main.grid(column=0,row=2,columnspan=4,sticky="nesw")
+        self.winner.grid(column=0,row=1,columnspan=4,sticky="nesw")
         for ele in self.rewards:
             ele[0].grid(column=ele[2],row=ele[1],sticky="nesw")
 
@@ -168,7 +168,7 @@ class CvC_Game_interface(Interface):
         
     def init_GUI(self,mode):
         self.question = tk.Label(self, text="How many times?",font=self.controller.title_font,width=20,height=1)
-        vcmd = (self.controller.register(self.validate),
+        vcmd = (self.controller.register(self._validate),
                 '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         self.text = tk.Entry(self,validatecommand = vcmd,width=10)
         self.button = tk.Button(self, text = 'Start', font=self.controller.title_font,
@@ -180,7 +180,7 @@ class CvC_Game_interface(Interface):
         self.question.grid(column=0,row=0,sticky="nesw")
         self.text.grid(column=0,row=2,sticky="nesw")
         self.button.grid(column=0,row=4,sticky="nesw")
-    def validate(self, action, index, value_if_allowed,
+    def _validate(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type, widget_name):
         if len(value_if_allowed)==0:
             return True
@@ -257,9 +257,9 @@ class Game_interface(Interface):
                 self.row_index.append([ tk.Label(self, text=chr(ord('A') + i),
                                         font=self.controller.title_font,
                                         width=2,height=1),1,i+1])
-            self.rewards.append([tk.Label(self, text="2",font=self.controller.title_font,width=2,height=1),0,4])
-            self.rewards.append([tk.Label(self, text='2',font=self.controller.title_font,width=2,height=1),0,2])
-            self.rewards.append([tk.Label(self, text="○",font=self.controller.title_font,width=2,height=1),0,3])
+            self.rewards.append([tk.Label(self, text="2",font=self.controller.title_font,width=2,height=1),0,7])
+            self.rewards.append([tk.Label(self, text='2',font=self.controller.title_font,width=2,height=1),0,3])
+            self.rewards.append([tk.Label(self, text="○",font=self.controller.title_font,width=2,height=1),0,5])
             self.rewards.append([tk.Label(self, text='●',font=self.controller.title_font,width=2,height=1),0,1])
             self._widgets_grid()
         else:
@@ -287,7 +287,7 @@ class Game_interface(Interface):
         for ele in self.row_index:
             ele[0].grid(column=ele[2],row=ele[1],sticky="nesw")
         for ele in self.rewards:
-            ele[0].grid(column=ele[2],row=ele[1],sticky="nesw")
+            ele[0].grid(column=ele[2],row=ele[1],columnspan=2,sticky="nesw")
                 
                 
     def _update_desks(self,change_desks,text):
