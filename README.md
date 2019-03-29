@@ -12,5 +12,5 @@ py -3 Othello.py
 ```
 
 ## To do
-1. Add the GUI for selecting agent algorithms.	(which will display the selection based on config)
+1. Add the GUI for selecting agent algorithms.	(which will display the selections based on config)
 2. Add the new algorithms.
