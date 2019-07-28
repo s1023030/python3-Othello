@@ -53,23 +53,55 @@ class Game:
         #mode=3  CvC
         if self.mode==1:
             self.players=[Human(),Human()]
+            winner,reward,self.poss_next_steps=self._cal_state()
+            self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
         elif self.mode==2:
             ai=self.config._sections["AI"]["0"]                          ## hard code
             self.players=[Human(),AI_factory.generate_AI(ai)]
             import random
             random.shuffle(self.players)
+            winner,reward,self.poss_next_steps=self._cal_state()
+            self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
         elif self.mode==3:
             ai1=self.config._sections["AI"]["0"]                           ## hard code
             ai2=self.config._sections["AI"]["0"]                           ## hard code
             self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
         self.game_loop=self._game_flow()
-        winner,reward,self.poss_next_steps=self._cal_state()
-        return self.board,reward,self.poss_next_steps
-    
+        winner,reward,poss_next_steps=next(self.game_loop)
+        return
+
+    def _game_flow(self):
+        while True:
+            winner,reward,self.poss_next_steps= self._cal_state()
+            #已確定勝者
+            if winner>-1:
+                if self.mode==3: #mode=3 ==> CvC
+                    yield  winner,reward,self.poss_next_steps
+                else:
+                    self.gui.frames['Game_interface'].game_over(winner,reward)
+            
+            if self.players[self.turn].is_human:
+                yield  winner,reward,self.poss_next_steps
+            else:
+                #player is AI
+                next_step=self.players[self.turn].placing_desk(winner,self.turn,self.board,reward,self.poss_next_steps)
+                if next_step[0]==(-1,-1):
+                    self.turn=self.turn^1
+                else:
+                    turn,change_disks,poss_last_steps=self.placing_disk(next_step[0])
+                    if self.mode==2:           #PvC
+                        self.gui.frames['Game_interface']._update_after_placing(turn,change_disks,poss_last_steps)
+            self.turn=self.turn^1
+            if self.mode==1 or self.mode==2:    #PvP or PvC
+                winner,reward,self.poss_next_steps=self._cal_state()
+                self.gui.frames['Game_interface']._change_reward_text(0,str(reward[0]))
+                self.gui.frames['Game_interface']._change_reward_text(1,str(reward[1]))
+                self.gui.frames['Game_interface']._update_desks(self.poss_next_steps,'．')
+
     def _cal_state(self):
         #檢查是否有贏家，同時計算彼此棋子數目，還有列出下一次可下的位置
         self.poss_next_steps=self._possible_next_step()
-        #處理沒有可能的下一步的情況
+        #處理沒有"可能的下一步"的情況
         winner=-1
         reward=[len(self._desks[0]),len(self._desks[1])] #calculate reward
         if len(self.poss_next_steps)==0:
@@ -86,6 +118,8 @@ class Game:
             winner,reward,self.poss_next_steps=next(tmp_generator)
         else:
             self.has_passed_once=False
+
+        #檢查是否終局
         total_desks=reward[0]+reward[1]
         if total_desks==64 or winner>-1:
             if reward[0]>reward[1]:
@@ -95,42 +129,6 @@ class Game:
             else:#flat
                 return 2,reward,self.poss_next_steps
         return winner,reward,self.poss_next_steps
-    def _game_flow(self):
-        while True:
-            winner,reward,self.poss_next_steps= self._cal_state()
-            if winner>-1:
-                if self.mode==3:
-                    yield  winner,reward,self.poss_next_steps
-                else:
-                    self.gui.frames['Game_interface'].game_over(winner,reward)
-            if self.players[self.turn].is_human:
-                yield  winner,reward,self.poss_next_steps
-            else:
-                #player is AI
-                next_step=self.players[self.turn].placing_desk(winner,self.board,reward,self.poss_next_steps)
-                if next_step[0]==(-1,-1):
-                    self.turn=self.turn^1
-                else:
-                    turn,change_disks,poss_last_steps=self.placing_disk(next_step[0])
-                    if self.mode==2:
-                        self.gui.frames['Game_interface']._update_after_placing(turn,change_disks,poss_last_steps)
-                        winner,reward,self.poss_next_steps=self._cal_state()
-                        self.gui.frames['Game_interface']._change_reward_text(0,str(reward[0]))
-                        self.gui.frames['Game_interface']._change_reward_text(1,str(reward[1]))
-                        self.gui.frames['Game_interface']._update_desks(self.poss_next_steps,'．')
-    def display(self):
-        print("=========================")
-        for row in self.board:
-            for ele in row:
-                if ele==-1:
-                    print(" 。",end="")
-                elif ele==0:
-                    print(" ○",end="")
-                elif ele==1:
-                    print(" ●",end="")
-            print("")
-        print("=========================")
-        return self.board
     
     def _possible_next_step(self):
         next_step=set()
@@ -167,8 +165,7 @@ class Game:
         new_desk_set.add(pos)
         self._desks[disk_of_turn] |= new_desk_set
         self._desks[opponent] -= new_desk_set
-        self.turn=self.turn^1
-        return (self.turn^1),new_desk_set,self.poss_next_steps
+        return self.turn,new_desk_set,self.poss_next_steps
 
     def check_valid_step(self,step):
         if step in self.poss_next_steps:
@@ -247,6 +244,19 @@ class Game:
             tmp_pos_col+=direction[1]
         return new_disk_set
 
+    def display(self):
+        print("=========================")
+        for row in self.board:
+            for ele in row:
+                if ele==-1:
+                    print(" 。",end="")
+                elif ele==0:
+                    print(" ○",end="")
+                elif ele==1:
+                    print(" ●",end="")
+            print("")
+        print("=========================")
+        return self.board
 
 
 #======================================================================================

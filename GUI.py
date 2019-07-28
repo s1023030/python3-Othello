@@ -1,4 +1,5 @@
-import tkinter as tk              
+import tkinter as tk
+from  tkinter  import ttk       
 from tkinter import font  as tkfont
 #from Othello import Game
 class GUI(tk.Tk):
@@ -174,6 +175,8 @@ class CvC_Game_interface(Interface):
         self.button = tk.Button(self, text = 'Start', font=self.controller.title_font,
                                                      width=10,height=1,
                                                      command=self._start_game)
+        #self.c1=ttk.Combobox(self,)
+
         self._widgets_grid()
         
     def _widgets_grid(self):
@@ -193,11 +196,16 @@ class CvC_Game_interface(Interface):
         else:
             return False
     def _start_game(self):
+        #################################Bug
         win=[0,0]
         times=(int)(self.text.get())
         for i in range(times):
-            board,reward,poss_next_steps=self.gd_parent.game_start(3)
-            winner,reward,poss_next_steps=next(self.gd_parent.game_loop)
+            self.gd_parent.game_start(3)
+            winner=-1
+            while winner==-1:
+                winner,reward,poss_next_steps=next(self.gd_parent.game_loop)
+                if winner!=-1:
+                    break
             if winner!=2:
                 win[winner]+=1
         self.grid_forget()
@@ -217,12 +225,12 @@ class Game_interface(Interface):
         self.rewards=[]
         
     def init_play(self,mode):
-        board,reward,poss_next_steps=self.gd_parent.game_start(mode)
-        self._init_GUI(board,reward,poss_next_steps)
+        self.gd_parent.game_start(mode)
+        '''self._init_GUI(board,reward,poss_next_steps)
         if mode==2:#PvC
-            winner,reward,poss_next_steps=next(self.gd_parent.game_loop)
+            winner,reward,poss_next_steps=next(self.gd_parent.game_loop)'''
         
-    def _init_GUI(self,board,reward,poss_next_steps):
+    def init_GUI(self,board,reward,poss_next_steps):
         if self.first_play:
             for row,r in zip(board,range(len(board))):
                 wid_row=[]
@@ -313,11 +321,11 @@ class Game_interface(Interface):
             turn,change_disks,poss_last_steps=self.gd_parent.placing_disk((row,col))
             self._update_after_placing(turn,change_disks,poss_last_steps)
             winner,reward,poss_next_steps=next(self.gd_parent.game_loop)
-            self._change_reward_text(0,str(reward[0]))
+            '''self._change_reward_text(0,str(reward[0]))
             self._change_reward_text(1,str(reward[1]))
-            '''if winner>-1:
-                self._game_over()'''
-            self._update_desks(poss_next_steps,'．')
+            if winner>-1:
+                self._game_over()
+            self._update_desks(poss_next_steps,'．')'''
             
     def game_over(self,winner,reward):
         self.grid_forget()

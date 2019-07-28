@@ -16,13 +16,13 @@ class AI_factory:
 class AI(Agent):
     def __init__(self,is_human=False):
         super().__init__(is_human)
-    def placing_desk(self,winner,board,reward,poss_next_steps):
+    def placing_desk(self,winner,you_are,board,reward,poss_next_steps):
         pass
     
 class AI_Random(AI):
     def __init__(self,is_human=False):
         super().__init__(is_human)
-    def placing_desk(self,winner,board,reward,poss_next_steps):
+    def placing_desk(self,winner,you_are,board,reward,poss_next_steps):
         if winner>-1:
             pass
         import random
