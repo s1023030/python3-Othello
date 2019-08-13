@@ -13,5 +13,5 @@ py -3 Othello.py
 
 ## To do
 1. Add new AI algorithms.
-2. Add the AI selection UI for CvP mode
+2. Add the UI of AI selections for CvP mode
 3. There is a bug when user press "Start" without key in how many times they want to play on CvC mode's selection page 
