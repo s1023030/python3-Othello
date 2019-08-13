@@ -1,11 +1,14 @@
 import tkinter as tk
 from  tkinter  import ttk       
 from tkinter import font  as tkfont
+import configparser 
 #from Othello import Game
 class GUI(tk.Tk):
     def __init__(self, *args, **kwargs):
         self.parent=kwargs['parent']
+        self.config=kwargs['config']
         del kwargs['parent']
+        del kwargs['config']
         tk.Tk.__init__(self, *args, **kwargs)
         self.resizable(False,False)       #視窗長寬使用者是否可變動
         
@@ -175,14 +178,26 @@ class CvC_Game_interface(Interface):
         self.button = tk.Button(self, text = 'Start', font=self.controller.title_font,
                                                      width=10,height=1,
                                                      command=self._start_game)
-        #self.c1=ttk.Combobox(self,)
-
+        AI_list=[]
+        for k,v in self.controller.config._sections["AI"].items():
+            AI_list.append(v)
+        self.c1=ttk.Combobox(self,value=AI_list)
+        self.c2=ttk.Combobox(self,value=AI_list)
+        self.txt_c1 = tk.Label(self,text="Player 1",width=10,height=1)
+        self.txt_c2 = tk.Label(self,text="Player 2",width=10,height=1)
         self._widgets_grid()
         
     def _widgets_grid(self):
-        self.question.grid(column=0,row=0,sticky="nesw")
-        self.text.grid(column=0,row=2,sticky="nesw")
-        self.button.grid(column=0,row=4,sticky="nesw")
+        self.question.grid(column=0,row=0,columnspan=3,sticky="nesw")
+        self.text.grid(column=0,row=2,columnspan=3,sticky="nesw")
+        self.txt_c1.grid(column=0,row=4)
+        self.txt_c2.grid(column=2,row=4)
+        self.c1.grid(column=0,row=6,sticky="nesw")
+        self.c2.grid(column=2,row=6,sticky="nesw")
+        self.button.grid(column=0,row=8,columnspan=3,sticky="nesw")
+        self.c1.current(0)
+        self.c2.current(0)
+
     def _validate(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type, widget_name):
         if len(value_if_allowed)==0:
@@ -196,11 +211,10 @@ class CvC_Game_interface(Interface):
         else:
             return False
     def _start_game(self):
-        #################################Bug
         win=[0,0]
         times=(int)(self.text.get())
         for i in range(times):
-            self.gd_parent.game_start(3)
+            self.gd_parent.game_start(3,c1=self.c1.get(),c2=self.c2.get())
             winner=-1
             while winner==-1:
                 winner,reward,poss_next_steps=next(self.gd_parent.game_loop)

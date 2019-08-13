@@ -12,5 +12,6 @@ py -3 Othello.py
 ```
 
 ## To do
-1. Add the GUI for selecting agent algorithms.	(which will display the selections based on config)
-2. Add the new algorithms.
+1. Add new AI algorithms.
+2. Add the AI selection UI for CvP mode
+3. There is a bug when user press "Start" without key in how many times they want to play on CvC mode's selection page 

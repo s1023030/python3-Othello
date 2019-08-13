@@ -18,10 +18,10 @@ class Game:
     def __init__(self):
         self.config=configparser.ConfigParser()
         self.config.read("Othello.cfg")
-        self.gui= GUI(parent=self)
+        self.gui= GUI(parent=self,config=self.config)
         self.gui.mainloop()
 
-    def game_start(self,mode,turn=1):
+    def game_start(self,mode,turn=1,*args, **kwargs):
         #self.turn判斷是誰的回合
         #●:   1
         #○:  0
@@ -63,8 +63,10 @@ class Game:
             winner,reward,self.poss_next_steps=self._cal_state()
             self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
         elif self.mode==3:
-            ai1=self.config._sections["AI"]["0"]                           ## hard code
-            ai2=self.config._sections["AI"]["0"]                           ## hard code
+            ai1=kwargs['c1']                       
+            ai2=kwargs['c2']
+            del kwargs['c1']
+            del kwargs['c2']       
             self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
         self.game_loop=self._game_flow()
         winner,reward,poss_next_steps=next(self.game_loop)
