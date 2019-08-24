@@ -250,26 +250,26 @@ class Game_interface(Interface):
                 wid_row=[]
                 for ele,c in zip(row,range(len(row))):
                     if ele==-1:
-                        if (r,c) in poss_next_steps:
+                        if (c,r) in poss_next_steps:
                             wid_row.append([tk.Button(self, text = '．',
                                                      font=self.controller.title_font,
                                                      width=2,height=1,
-                                                     command=lambda x=r,y=c: self._placing_disk(x,y)),r+2,c+1])
+                                                     command=lambda x=c,y=r: self._placing_disk(x,y)),c+2,r+1])
                         else:
                             wid_row.append([tk.Button(self, text = '　',
                                                      font=self.controller.title_font,
                                                      width=2,height=1,
-                                                     command=lambda x=r,y=c: self._placing_disk(x,y)),r+2,c+1])
+                                                     command=lambda x=c,y=r: self._placing_disk(x,y)),c+2,r+1])
                     elif ele==0:
                         wid_row.append([tk.Button(self, text = '○',
                                                  font=self.controller.title_font,
                                                  width=2,height=1,
-                                                 command=lambda x=r,y=c: self._placing_disk(x,y)),r+2,c+1])
+                                                  command=lambda x=c,y=r: self._placing_disk(x,y)),c+2,r+1])
                     elif ele==1:
                         wid_row.append([tk.Button(self, text = '●',
                                                  font=self.controller.title_font,
                                                  width=2,height=1,
-                                                 command=lambda x=r,y=c: self._placing_disk(x,y)),r+2,c+1])
+                                                 command=lambda x=c,y=r: self._placing_disk(x,y)),c+2,r+1])
                 self.board.append(wid_row)
             for i in range(8):
                 self.col_index.append([ tk.Label(self, text=str(i+1),
@@ -291,9 +291,9 @@ class Game_interface(Interface):
                 for ele,c in zip(row,range(len(row))):
                     if ele==-1:
                         if (r,c) in poss_next_steps:
-                            self._change_board_text(r,c,'．')
+                            self._change_board_text(c,r,'．')
                         else:
-                            self._change_board_text(r,c,'　')
+                            self._change_board_text(c,r,'　')
                     elif ele==0:
                         self._change_board_text(r,c,'○')
                     elif ele==1:
@@ -330,7 +330,7 @@ class Game_interface(Interface):
     def _change_reward_text(self,who,text):
         self.rewards[who][0].configure(text=text)
         
-    def _placing_disk(self,row,col):
+    def _placing_disk(self,col,row):
         if self.gd_parent.check_valid_step((row,col)):
             turn,change_disks,poss_last_steps=self.gd_parent.placing_disk((row,col))
             self._update_after_placing(turn,change_disks,poss_last_steps)

@@ -57,14 +57,14 @@ class Game:
             self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
         elif self.mode==2:
             ai=self.config._sections["AI"]["0"]                          ## hard code
-            self.players=[Human(),AI_factory.generate_AI(ai)]
+            self.players=[AI_factory.generate_AI(ai),Human()]
             import random
             random.shuffle(self.players)
             winner,reward,self.poss_next_steps=self._cal_state()
             self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
         elif self.mode==3:
-            ai1=kwargs['c1']                       
-            ai2=kwargs['c2']
+            ai1=kwargs['c1']        #       computer 1 的演算法  
+            ai2=kwargs['c2']        #       computer 2 的演算法
             del kwargs['c1']
             del kwargs['c2']       
             self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
@@ -77,7 +77,7 @@ class Game:
             winner,reward,self.poss_next_steps= self._cal_state()
             #已確定勝者
             if winner>-1:
-                if self.mode==3: #mode=3 ==> CvC
+                if self.mode==3:                                   #mode=3 ==> CvC 要回傳最終rewards
                     yield  winner,reward,self.poss_next_steps
                 else:
                     self.gui.frames['Game_interface'].game_over(winner,reward)
@@ -87,13 +87,14 @@ class Game:
             else:
                 #player is AI
                 next_step=self.players[self.turn].placing_desk(winner,self.turn,self.board,reward,self.poss_next_steps)
-                if next_step[0]==(-1,-1):
-                    self.turn=self.turn^1
+                if next_step[0]==(-1,-1):          #沒有下一手可下
+                    pass
                 else:
                     turn,change_disks,poss_last_steps=self.placing_disk(next_step[0])
                     if self.mode==2:           #PvC
                         self.gui.frames['Game_interface']._update_after_placing(turn,change_disks,poss_last_steps)
             self.turn=self.turn^1
+
             if self.mode==1 or self.mode==2:    #PvP or PvC
                 winner,reward,self.poss_next_steps=self._cal_state()
                 self.gui.frames['Game_interface']._change_reward_text(0,str(reward[0]))
