@@ -13,7 +13,8 @@
 import math
 import configparser 
 from GUI import GUI
-from Agent import *
+from Agent.Agent import Human
+from Agent.AI_factory import AI_factory
 class Game:
     def __init__(self):
         self.config=configparser.ConfigParser()
