@@ -67,8 +67,9 @@ class Game:
             ai1=kwargs['c1']        #       computer 1 的演算法  
             ai2=kwargs['c2']        #       computer 2 的演算法
             del kwargs['c1']
-            del kwargs['c2']       
-            self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
+            del kwargs['c2'] 
+            if len(self.players)==0:
+                self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
         self.game_loop=self._game_flow()
         winner,reward,poss_next_steps=next(self.game_loop)
         return
