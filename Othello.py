@@ -11,6 +11,7 @@
 
 '''
 import math
+import random
 import configparser 
 from GUI import GUI
 from Agent.Agent import Human
@@ -59,7 +60,6 @@ class Game:
         elif self.mode==2:
             ai=self.config._sections["AI"]["0"]                          ## hard code
             self.players=[AI_factory.generate_AI(ai),Human()]
-            import random
             random.shuffle(self.players)
             winner,reward,self.poss_next_steps=self._cal_state()
             self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
