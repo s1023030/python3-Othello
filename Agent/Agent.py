@@ -6,11 +6,6 @@ class Human(Agent):
     def __init__(self,is_human=True):
         super().__init__(is_human)
 
-'''class AI_factory:
-    def generate_AI(AI_type=""):
-        return {
-            "Random":AI_Random()
-        }[AI_type]'''
 
 class AI(Agent):
     def __init__(self,is_human=False):
