@@ -18,11 +18,8 @@ class AI_Random(AI):
         '''
 
         if winner>-1:
-            pass
+            return [(-1,-1)]
         secure_random = random.SystemRandom()
-        print(you_are)
-        print(reward)
-        print("=====================")
         if len(poss_next_steps)>0:
             return secure_random.sample(poss_next_steps,1)
         else:

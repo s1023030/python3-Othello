@@ -70,7 +70,9 @@ class Game:
             del kwargs['c2'] 
             if len(self.players)==0:
                 self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
-            random.shuffle(self.players)
+            self.players[0].new_episode()
+            self.players[1].new_episode()
+            #random.shuffle(self.players)
         self.game_loop=self._game_flow()
         winner,reward,poss_next_steps=next(self.game_loop)
         return
