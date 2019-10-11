@@ -20,6 +20,7 @@ class Game:
     def __init__(self):
         self.config=configparser.ConfigParser()
         self.config.read("Othello.cfg")
+        self.players=[]
         self.gui= GUI(parent=self,config=self.config)
         self.gui.mainloop()
 
@@ -47,7 +48,6 @@ class Game:
         self._desks=[
             set([(3,3),(4,4)]),set([(3,4),(4,3)])
         ]
-        self.players=[]
         self.poss_next_steps=set()
         self.has_passed_once=False
         #mode=1  PvP
@@ -58,8 +58,9 @@ class Game:
             winner,reward,self.poss_next_steps=self._cal_state()
             self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
         elif self.mode==2:
-            ai=self.config._sections["AI"]["0"]                          ## hard code
+            ai=self.config._sections["AI"]["1"]                          ## hard code
             self.players=[AI_factory.generate_AI(ai),Human()]
+            self.players[0].new_episode()
             random.shuffle(self.players)
             winner,reward,self.poss_next_steps=self._cal_state()
             self.gui.frames['Game_interface'].init_GUI(self.board,reward,self.poss_next_steps)
@@ -69,6 +70,7 @@ class Game:
             del kwargs['c1']
             del kwargs['c2'] 
             if len(self.players)==0:
+                print("Set player")
                 self.players=[AI_factory.generate_AI(ai1),AI_factory.generate_AI(ai2)]
             self.players[0].new_episode()
             self.players[1].new_episode()

@@ -4,18 +4,28 @@ import random
 import tensorflow.contrib.layers as tcl
 from Agent.Agent import AI
 
+is_restore = True
+restore_num = 353
+
 class AI_DQN(AI):
     def __init__(self,is_human=False):
         super().__init__(is_human)
         self.name = 'AI_DL'
-        self.store_path = "model/%d.ckpt"
+        self.store_path = "Agent/model/DQN_%d.ckpt"
         self.p_LR = 5e-5
         self._construct_network()
         self.pre_state_np = None
         self.pre_action = None
+        self.episode_num = 0
+        if is_restore:
+            print("Restore from: ", self.store_path%restore_num)
+            self.saver.restore(self.sess, self.store_path%restore_num)
+            self.episode = restore_num
+
 
     def new_episode(self):
         self.first_turn = True
+        self.episode_num +=1
 
     def placing_desk(self,winner,you_are,board,reward,poss_next_steps):
         '''
@@ -41,6 +51,8 @@ class AI_DQN(AI):
 
         self.first_turn = False
         if winner>-1:
+            store_path = self.saver.save(self.sess, self.store_path%self.episode_num)
+            print("Store model : ",store_path, " !!!!!!!!!!!!")
             return [(-1,-1)]
         elif  len(poss_next_steps)==0:
             return [(-1,-1)]
@@ -68,7 +80,8 @@ class AI_DQN(AI):
         reward_np = np.zeros([1,64],dtype=np.float32)
         action_index = action[0][0]*8+action[0][1]
         reward_np[0][action_index] = reward
-        a_,a__,a___ = self.sess.run([self.Q_evals,self.loss,self.train_op],feed_dict={self.state:state,self.reward:reward_np})
+        a_, loss_ ,a___ = self.sess.run([self.Q_evals,self.loss,self.train_op],feed_dict={self.state:state,self.reward:reward_np})
+        print("Loss: ", loss_)
 
     def _predict(self, state):
         state = np.reshape(state, [1,8,8,1])
@@ -83,35 +96,37 @@ class AI_DQN(AI):
         Q_evals_ =  tf.where(tf.greater(self.reward, 0.09), self.Q_evals, tf.zeros_like(self.reward))
 
 
-        DQ_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        DQ_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "DQ_fn")
+
 
         self.loss = tf.keras.losses.MSE(self.reward,Q_evals_)
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.p_LR).minimize(self.loss, var_list=DQ_vars)
+        with tf.variable_scope("optimizer",reuse=tf.compat.v1.AUTO_REUSE) as scope:
+            self.train_op =  tf.train.AdamOptimizer(learning_rate=self.p_LR).minimize(self.loss, var_list=DQ_vars)
         gpu_options = tf.GPUOptions(allow_growth=True)
         self.saver = tf.train.Saver(max_to_keep=50,var_list=DQ_vars)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         self.sess.run(tf.global_variables_initializer())
 
     def _DQ_fn(self, state_tmp):
-        #with tf.variable_scope("DQ_fn",reuse=tf.compat.v1.AUTO_REUSE) as scope:
-        conv1 = self._conv2d(state_tmp,   4, 7)
-        conv2 = self._conv2d(conv1,   8, 5)
-        conv3 = self._conv2d(conv2,   16, 5)
-        conv3_p = self._max_pool(conv3, 2) # 4 4 16
+        with tf.variable_scope("DQ_fn",reuse=tf.compat.v1.AUTO_REUSE) as scope:
+            conv1 = self._conv2d(state_tmp,   4, 7)
+            conv2 = self._conv2d(conv1,   8, 5)
+            conv3 = self._conv2d(conv2,   16, 5)
+            conv3_p = self._max_pool(conv3, 2) # 4 4 16
 
-        conv4= self._conv2d(conv3_p,   32, 3)
-        conv4_p = self._max_pool(conv4, 2) # 2 2 32
+            conv4= self._conv2d(conv3_p,   32, 3)
+            conv4_p = self._max_pool(conv4, 2) # 2 2 32
 
-        conv5 = self._conv2d(conv4_p,   64, 1)
-        conv5_p = self._max_pool(conv5, 2) # 1 1 64
+            conv5 = self._conv2d(conv4_p,   64, 1)
+            conv5_p = self._max_pool(conv5, 2) # 1 1 64
 
-         #feature1 = tf.reshape(conv5_p, [-1])
-        feature1 = tf.layers.flatten(conv5)
+            #feature1 = tf.reshape(conv5_p, [-1])
+            feature1 = tf.layers.flatten(conv5)
 
-        feature2 =self._fully_connected(feature1, 70)
-        feature3 =self._fully_connected(feature2, 64)
-        feature4 =  tf.maximum(feature3, 0.01)
-        return feature4
+            feature2 =self._fully_connected(feature1, 70)
+            feature3 =self._fully_connected(feature2, 64)
+            feature4 =  tf.maximum(feature3, 0.01)
+            return feature4
         
     def _value_fn(self, winner, you_are, reward):
         score = reward[you_are]-reward[(you_are^1)]
