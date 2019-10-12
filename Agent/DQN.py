@@ -5,14 +5,14 @@ import tensorflow.contrib.layers as tcl
 from Agent.Agent import AI
 
 is_restore = True
-restore_num = 353
+restore_num = 500
 
 class AI_DQN(AI):
     def __init__(self,is_human=False):
         super().__init__(is_human)
         self.name = 'AI_DL'
         self.store_path = "Agent/model/DQN_%d.ckpt"
-        self.p_LR = 5e-5
+        self.p_LR = 5e-7
         self._construct_network()
         self.pre_state_np = None
         self.pre_action = None
@@ -20,7 +20,7 @@ class AI_DQN(AI):
         if is_restore:
             print("Restore from: ", self.store_path%restore_num)
             self.saver.restore(self.sess, self.store_path%restore_num)
-            self.episode = restore_num
+            self.episode_num = restore_num
 
 
     def new_episode(self):
@@ -51,6 +51,8 @@ class AI_DQN(AI):
 
         self.first_turn = False
         if winner>-1:
+            #print(self.grad_)
+            print("Loss: ", self.loss_)
             store_path = self.saver.save(self.sess, self.store_path%self.episode_num)
             print("Store model : ",store_path, " !!!!!!!!!!!!")
             return [(-1,-1)]
@@ -59,16 +61,20 @@ class AI_DQN(AI):
         else:
             action =None
             prob = random.uniform(0.0,1.0)
-            if prob>0.85:
+            if prob>0.70:
                 secure_random = random.SystemRandom()
                 action = secure_random.sample(poss_next_steps,1)
             else:
                 action_np = self._predict(state_np)
-                mask = np.zeros(action_np.shape)
+                min_val = abs(np.min(action_np))+1
+                mask1 = np.zeros(action_np.shape)
+                mask2 = np.zeros(action_np.shape)
                 for step in poss_next_steps:
                     tmp_int = step[0]*8+step[1]
-                    mask[0][tmp_int]=1.0
-                action_np = np.multiply(action_np[0], mask[0])
+                    mask1[tmp_int]=1.0
+                    mask2[tmp_int]=min_val 
+                action_np = np.multiply(action_np, mask1)
+                action_np = np.add(action_np, mask2)
                 step = np.argmax(action_np,axis=-1)
                 action = [(int(step/8),int(step%8))]
             self.pre_state_np = state_np
@@ -77,23 +83,25 @@ class AI_DQN(AI):
 
     def _train(self, state, action, reward):
         state = np.reshape(state, [1,8,8,1])
-        reward_np = np.zeros([1,64],dtype=np.float32)
+        reward_np = np.zeros([1,64])
         action_index = action[0][0]*8+action[0][1]
         reward_np[0][action_index] = reward
-        a_, loss_ ,a___ = self.sess.run([self.Q_evals,self.loss,self.train_op],feed_dict={self.state:state,self.reward:reward_np})
-        print("Loss: ", loss_)
+        a_, self.loss_ , a___, self.grad_ = self.sess.run([self.Q_evals,self.loss,self.train_op, self.grad],feed_dict={self.state:state,self.reward:reward_np})
+        
 
     def _predict(self, state):
         state = np.reshape(state, [1,8,8,1])
         action_np = self.sess.run(self.Q_evals,feed_dict={self.state:state})
-        return action_np 
+        return action_np[0]
 
     def _construct_network(self):
         self.state = tf.placeholder(tf.float32, [1,8,8,1])
         self.reward = tf.placeholder(tf.float32, [1,64])
 
         self.Q_evals = self._DQ_fn(self.state)
-        Q_evals_ =  tf.where(tf.greater(self.reward, 0.09), self.Q_evals, tf.zeros_like(self.reward))
+
+        condition = tf.math.logical_or(tf.math.greater(self.reward,0.0001), tf.math.less(self.reward,-0.0001) )
+        Q_evals_ =  tf.where(condition, self.Q_evals, tf.zeros_like(self.reward))
 
 
         DQ_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "DQ_fn")
@@ -101,7 +109,10 @@ class AI_DQN(AI):
 
         self.loss = tf.keras.losses.MSE(self.reward,Q_evals_)
         with tf.variable_scope("optimizer",reuse=tf.compat.v1.AUTO_REUSE) as scope:
-            self.train_op =  tf.train.AdamOptimizer(learning_rate=self.p_LR).minimize(self.loss, var_list=DQ_vars)
+            optimizer =  tf.train.AdamOptimizer(learning_rate=self.p_LR)
+            self.train_op = optimizer.minimize(self.loss, var_list=DQ_vars)
+            gvs = optimizer.compute_gradients(self.loss, var_list=DQ_vars)
+            self.grad = [ grad for grad , var in gvs]
         gpu_options = tf.GPUOptions(allow_growth=True)
         self.saver = tf.train.Saver(max_to_keep=50,var_list=DQ_vars)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -121,19 +132,20 @@ class AI_DQN(AI):
             conv5_p = self._max_pool(conv5, 2) # 1 1 64
 
             #feature1 = tf.reshape(conv5_p, [-1])
-            feature1 = tf.layers.flatten(conv5)
+            feature1 = tf.layers.flatten(conv5_p)
 
             feature2 =self._fully_connected(feature1, 70)
             feature3 =self._fully_connected(feature2, 64)
-            feature4 =  tf.maximum(feature3, 0.01)
+            #feature4 =  tf.maximum(feature3, 0.01)
+            feature4 = tf.where(tf.equal(feature3, 0.0), tf.constant(0.001,tf.float32,feature3.get_shape()), feature3 )
             return feature4
         
     def _value_fn(self, winner, you_are, reward):
         score = reward[you_are]-reward[(you_are^1)]
         if winner == you_are:
-            score += 64.0
+            score += 32.0
         elif winner == (you_are^1):
-            score -= 64.0
+            score -= 32.0
 
         return score
 
