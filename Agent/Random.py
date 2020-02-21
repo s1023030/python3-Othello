@@ -4,6 +4,7 @@ import numpy as np
 class AI_Random(AI):
     def __init__(self,is_human=False):
         super().__init__(is_human)
+        self.name = 'Random'
     def placing_desk(self,winner,you_are,board,reward,poss_next_steps):
         '''
         board
